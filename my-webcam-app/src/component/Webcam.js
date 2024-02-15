@@ -94,7 +94,6 @@ function Webcam() {
         });
     };
 
-
     // Function to check if the face is within the oval boundary
     const isWithinOvalBoundary = (box, canvas) => {
       // Define the oval boundary
@@ -143,7 +142,40 @@ function Webcam() {
         // Remove the link from the document
         document.body.removeChild(link);
     };
-  
+
+    // Function to capture the webcam image and send it as multipart/form-data
+  // const captureImageAndSend = async (canvas) => {
+  //   const video = videoRef.current;
+  //   const ctx = canvas.getContext('2d');
+  //   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  //   // Convert the canvas to a Blob
+  //   canvas.toBlob(async (blob) => {
+  //       // Create a new FormData object
+  //       const formData = new FormData();
+  //       // Append the captured image file to the FormData object
+  //       formData.append('file', blob, 'captured_image.png');
+
+  //       // Specify the endpoint you're sending the data to
+  //       const uploadEndpoint = 'YOUR_API_ENDPOINT_HERE';
+
+  //       try {
+  //           // Use fetch API to send the FormData object to the server
+  //           const response = await fetch(uploadEndpoint, {
+  //               method: 'POST',
+  //               body: formData,
+  //               // Do not set Content-Type header when sending FormData,
+  //               // the browser will set it for you, including the boundary parameter.
+  //           });
+
+  //           // Handle server response
+  //           const result = await response.json();
+  //           console.log(result); // Log or handle the server response
+  //       } catch (error) {
+  //           console.error('Error sending the image:', error);
+  //       }
+  //   }, 'image/png');
+  // };
 
     initFaceDetection();
   }, []);
