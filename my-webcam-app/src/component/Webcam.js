@@ -5,7 +5,6 @@ function Webcam() {
   const videoRef = useRef(null);
   const videoCanvasRef = useRef(null); // Canvas for video content
   const overlayCanvasRef = useRef(null); // Canvas for overlay (oval boundary)
-  const [faceInOvalTime, setFaceInOvalTime] = useState(0);
 
   useEffect(() => {
     // Load face-api.js models
@@ -42,7 +41,7 @@ function Webcam() {
         const overlayCanvas = overlayCanvasRef.current;
 
         let timeInOval = 0; // Variable to track time spent in oval
-        let imageCaptured = false; // Flag to track whether image has been captured
+        //let imageCaptured = false; // Flag to track whether image has been captured
 
         video.addEventListener('play', () => {
         faceapi.matchDimensions(videoCanvas, {
@@ -73,16 +72,17 @@ function Webcam() {
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
             // Check if the face is within the oval boundary
-            if (isWithinOvalBoundary(box, overlayCanvas) && !imageCaptured) {
+            if (isWithinOvalBoundary(box, overlayCanvas)) {
                 faceInOval = true; // Indicate that a face is within the oval
                 timeInOval += 100; // Increment time spent in the oval
 
                 // Check if the time spent in the oval exceeds 5000 milliseconds (5 seconds)
-                if (timeInOval >= 10000) {
+                if (timeInOval == 10000 ) {
                   timeInOval = 0;
-                  captureImage(videoCanvas); // Capture the webcam image
-                  imageCaptured = true; // Set the flag to indicate image has been captured
-                setTimeout(() => { imageCaptured = false; }, 500); // Optionally add a cooldown period before allowing another capture
+                  //imageCaptured = false; // Set the flag to indicate image has been captured
+                  captureImageAndSend(videoCanvas)
+                  //captureImage(videoCanvas); // Capture the webcam image
+                  //setTimeout(() => { imageCaptured = false; }, 500); // Optionally add a cooldown period before allowing another capture
                 }
             } 
             });
@@ -93,6 +93,7 @@ function Webcam() {
         }, 100);
         });
     };
+
 
     // Function to check if the face is within the oval boundary
     const isWithinOvalBoundary = (box, canvas) => {
@@ -122,60 +123,66 @@ function Webcam() {
       ctx.stroke();
     };
 
-    // Function to capture the webcam image
-    const captureImage = (canvas) => {
+    // // Function to capture the webcam image
+    // const captureImage = (canvas) => {
+    //     const ctx = canvas.getContext('2d');
+    //     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+    //     // Get the data URL of the captured image
+    //     const dataURL = canvas.toDataURL();
+    
+    //     // Create a link and set its attributes
+    //     const link = document.createElement('a');
+    //     link.href = dataURL;
+    //     link.download = 'captured_image.png'; // You can set the filename here
+    
+    //     // Simulate a click on the link to trigger the download
+    //     document.body.appendChild(link);
+    //     link.click();
+    
+    //     // Remove the link from the document
+    //     document.body.removeChild(link);
+    // };
+
+    const captureImageAndSend = async (canvas) => {
+        const video = videoRef.current;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    
-        // Get the data URL of the captured image
-        const dataURL = canvas.toDataURL();
-    
-        // Create a link and set its attributes
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'captured_image.png'; // You can set the filename here
-    
-        // Simulate a click on the link to trigger the download
-        document.body.appendChild(link);
-        link.click();
-    
-        // Remove the link from the document
-        document.body.removeChild(link);
-    };
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+        // Convert the canvas to a Blob
+        canvas.toBlob(async (blob) => {
+          // Create a new FormData object
+          const formData = new FormData();
+          // Append the captured image file to the FormData object
+          formData.append('image', blob, 'captured_image.png');
+      
+          // Specify the endpoint you're sending the data to
+          const uploadEndpoint = 'http://localhost:8080/searchFace';
+      
+          try {
+            // Use fetch API to send the FormData object to the server
+            const response = await fetch(uploadEndpoint, {
+              method: 'POST',
+              body: formData,
+            });
+      
+            // Check if the request was successful
+            if (response.ok) {
+              // If the HTTP status code is in the 200-299 range
+              const result = await response.json(); // Assuming the server responds with JSON
+              console.log('Image sent successfully:', result);
+              // You can perform additional actions here if the send was successful
+            } else {
+              // The HTTP status code is outside the 200-299 range
+              console.error('Failed to send image. Status:', response.status);
+            }
+          } catch (error) {
+            // The fetch operation itself failed (e.g., network error)
+            console.error('Error sending the image:', error);
+          }
+        }, 'image/png');
+      };
 
-    // Function to capture the webcam image and send it as multipart/form-data
-  // const captureImageAndSend = async (canvas) => {
-  //   const video = videoRef.current;
-  //   const ctx = canvas.getContext('2d');
-  //   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  //   // Convert the canvas to a Blob
-  //   canvas.toBlob(async (blob) => {
-  //       // Create a new FormData object
-  //       const formData = new FormData();
-  //       // Append the captured image file to the FormData object
-  //       formData.append('file', blob, 'captured_image.png');
-
-  //       // Specify the endpoint you're sending the data to
-  //       const uploadEndpoint = 'YOUR_API_ENDPOINT_HERE';
-
-  //       try {
-  //           // Use fetch API to send the FormData object to the server
-  //           const response = await fetch(uploadEndpoint, {
-  //               method: 'POST',
-  //               body: formData,
-  //               // Do not set Content-Type header when sending FormData,
-  //               // the browser will set it for you, including the boundary parameter.
-  //           });
-
-  //           // Handle server response
-  //           const result = await response.json();
-  //           console.log(result); // Log or handle the server response
-  //       } catch (error) {
-  //           console.error('Error sending the image:', error);
-  //       }
-  //   }, 'image/png');
-  // };
 
     initFaceDetection();
   }, []);
