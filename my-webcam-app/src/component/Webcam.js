@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect} from 'react';
 import * as faceapi from 'face-api.js';
+import './webcam.css'; 
 
 function Webcam() {
   const videoRef = useRef(null);
@@ -29,7 +30,7 @@ function Webcam() {
             console.error("Error accessing the webcam: ", err);
           });
       }
-    };
+    };  
 
     // Initialize face detection
     const initFaceDetection = async () => {
@@ -58,40 +59,41 @@ function Webcam() {
         setInterval(async () => {
             const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
             const resizedDetections = faceapi.resizeResults(detections, {
-            width: video.offsetWidth,
-            height: video.offsetHeight,
+                width: video.offsetWidth,
+                height: video.offsetHeight,
             });
 
             videoCanvas.getContext('2d').clearRect(0, 0, videoCanvas.width, videoCanvas.height);
             let faceInOval = false; // Track if any face is in the oval
             resizedDetections.forEach(detection => {
-            const box = detection.box;
-            const ctx = videoCanvas.getContext('2d');
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
+                const box = detection.box;
+                const ctx = videoCanvas.getContext('2d');
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
 
             // Check if the face is within the oval boundary
-            if (isWithinOvalBoundary(box, overlayCanvas)) {
-                faceInOval = true; // Indicate that a face is within the oval
-                timeInOval += 100; // Increment time spent in the oval
+                if (isWithinOvalBoundary(box, overlayCanvas)) {
+                    faceInOval = true; // Indicate that a face is within the oval
+                    timeInOval += 100; // Increment time spent in the oval
 
-                // Check if the time spent in the oval exceeds 5000 milliseconds (5 seconds)
-                if (timeInOval == 10000 ) {
-                  timeInOval = 0;
-                  //imageCaptured = false; // Set the flag to indicate image has been captured
-                  captureImageAndSend(videoCanvas)
-                  //captureImage(videoCanvas); // Capture the webcam image
-                  //setTimeout(() => { imageCaptured = false; }, 500); // Optionally add a cooldown period before allowing another capture
-                }
-            } 
+                    // Check if the time spent in the oval exceeds 5000 milliseconds (5 seconds)
+                    if (timeInOval >= 3000 ) {
+                    //imageCaptured = false; // Set the flag to indicate image has been captured
+                    captureImageAndSend(videoCanvas)
+                    //captureImage(videoCanvas); // Capture the webcam image
+                    timeInOval = 0;
+                    faceInOval = false;
+                    //setTimeout(() => { imageCaptured = false; }, 500); // Optionally add a cooldown period before allowing another capture
+                    }
+                } 
             });
 
             if (!faceInOval) {
-                timeInOval = 0; // Reset time if no face is in the oval
+                    timeInOval = 0; // Reset time if no face is in the oval
             }
         }, 100);
-        });
+    });
     };
 
 
@@ -188,10 +190,10 @@ function Webcam() {
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '720px', height: '560px' }}>
-      <video ref={videoRef} autoPlay muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      <canvas ref={videoCanvasRef} style={{ position: 'absolute', top: 0, left: 0 }} width="720" height="560" />
-      <canvas ref={overlayCanvasRef} style={{ position: 'absolute', top: 0, left: 0 }} width="720" height="560" />
+    <div className="webcam-container">
+        <video ref={videoRef} autoPlay muted className="webcam-video" />
+        <canvas ref={videoCanvasRef} className="webcam-canvas" />
+        <canvas ref={overlayCanvasRef} className="webcam-overlay" />
     </div>
   );
 }
